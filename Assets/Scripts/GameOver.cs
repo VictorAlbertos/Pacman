@@ -6,14 +6,22 @@ using UnityEngine.UI;
 using Parse;
 using System.Collections.Generic;
 using System.Threading;
+using System.Text;
+using UnityEngine.Advertisements;
 
 public class GameOver : MonoBehaviour {
 	private Text score;
 	private Text enterName;
 	private InputField inputField;
 	private Button button;
+	private GameObject loading;
 
 	void Start () {
+		Advertisement.Initialize("38086");
+		if(Advertisement.isReady()) Advertisement.Show();
+
+		loading = GameObject.Find("loading");
+
 		score = GameObject.Find("score").GetComponent<Text>();
 		score.text = "score: " + UIHandler.score.ToString();
 
@@ -34,12 +42,17 @@ public class GameOver : MonoBehaviour {
 		StartCoroutine(callback());
 	}
 
+	void Update() {
+		loading.transform.Rotate(Vector3.forward * -5);
+	}
+
 	IEnumerable<ParseObject> results;
 	private IEnumerator callback() {
 		if(results == null) {
 			yield return new WaitForSeconds(0.5f);
 			StartCoroutine(callback());
 		} else {
+			loading.SetActive(false);
 			if (results.Count() > 0) {
 				ParseObject gameScore = (ParseObject) results.ElementAt(0);
 				int bestScore = int.Parse(string.Format("{0}", gameScore["score"]));

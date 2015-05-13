@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class Coco : MonoBehaviour {
-	private const int totalCocos = 246;
+	private const int totalCocos = 242;
 	public static int nCocosEaten;
 	private ComeCocos comeCocos;
 
@@ -13,6 +13,7 @@ public class Coco : MonoBehaviour {
 	void OnTriggerEnter2D(Collider2D co) {
 		if (co.name == "come_cocos") {
 			comeCocos.soundCoco();
+
 			if (tag == "special_coco") {
 				comeCocos.turnAsAKillingMachine();
 
@@ -22,12 +23,22 @@ public class Coco : MonoBehaviour {
 					Ghost ghost = ghostObject.GetComponent<Ghost>();
 					ghost.comeCocosCanKillNotification();
 				}
+				StartCoroutine(recreateSpecialCocoWithDelay());
+			} else {
+				Destroy(gameObject);
+				nCocosEaten++;
 			}
-
-			Destroy(gameObject);
+		
 			UIHandler.score += 10;
-			nCocosEaten++;
 		}
+	}
+
+	private Vector2 originalPosition;
+	IEnumerator recreateSpecialCocoWithDelay() {
+		originalPosition = gameObject.transform.position;
+		gameObject.transform.position = new Vector2(1000,1000);
+		yield return new WaitForSeconds(Random.Range(25, 60));
+		gameObject.transform.position = originalPosition;
 	}
 
 	public static bool isAllCocosEaten() {

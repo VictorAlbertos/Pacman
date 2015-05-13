@@ -4,16 +4,18 @@ using System.Collections.Generic;
 using System;    
 
 public class Ghost : MonoBehaviour {
+	public static float factor = 1;
 	public Transform[] waypoints;
 	int cur = 0;
 	public bool canStart;
-	public float speed = 0.3f;
+	private float speed = 0.15f * factor;
+	private float speedMovement = 7 * factor;	
 	public bool hasBeenKilled;
 	private ComeCocos comeCocos;
 	private Vector2 initialPosition;
-	public bool randomBehaviour;
-	
+
 	void Start() {
+		if(speedMovement > 12) speedMovement = 12;
 		GetComponent<Animator>().speed = 0;
 		initialPosition = transform.position;
 		comeCocos = GameObject.Find("come_cocos").GetComponent<ComeCocos>();
@@ -30,7 +32,7 @@ public class Ghost : MonoBehaviour {
 	void FixedUpdate () {
 		if (!canStart || !UIHandler.canStart) return;
 		
-		if (randomBehaviour && cur == waypoints.Length-1) randomPath();
+		if (cur == waypoints.Length-1) randomPath();
 		else followWaypoints();
 		
 		handleAnimation();
@@ -46,13 +48,11 @@ public class Ghost : MonoBehaviour {
 		float dirX = 0.0f;
 		float dirY = 0.0f;
 		
-		if (randomBehaviour) {
+		if (cur == waypoints.Length-1) {
 			if (currentDirection == Vector2.up) dirY = 0.2f;
 			else if (currentDirection == -Vector2.up) dirY = -0.2f;
 			else if (currentDirection == Vector2.right) dirX = 0.2f;
 			else if (currentDirection == -Vector2.right) dirX = -0.2f;
-			GetComponent<Animator>().SetFloat("DirX", dirX);
-			GetComponent<Animator>().SetFloat("DirY", dirY);
 		} else {
 			Vector2 dir = waypoints[cur].position - transform.position;
 			dirX = dir.x;
@@ -64,7 +64,6 @@ public class Ghost : MonoBehaviour {
 	}
 	
 	
-	public float speedMovement = 5;	
 	Vector2 currentDirection = -Vector2.right;
 	Vector2 nextDirection = -Vector2.right;
 	private void randomPath() {
@@ -72,12 +71,13 @@ public class Ghost : MonoBehaviour {
 			currentDirection = nextDirection;
 		}
 
-		if(valid(currentDirection)) transform.Translate(currentDirection * speedMovement * Time.deltaTime);
+		if(valid(currentDirection)) {
+			transform.Translate(currentDirection * speedMovement * Time.deltaTime);
+		}
 		else changeToValidDirection(true);
 	}
 	
 	private void changeToValidDirection(bool calledFromCurrentDirection) {
-
 		List<Vector2> allPosibleDirections = new List<Vector2> {Vector2.up, Vector2.right, -Vector2.right, -Vector2.up};
 		allPosibleDirections.RemoveAll(val => val == -currentDirection);
 
@@ -90,7 +90,8 @@ public class Ghost : MonoBehaviour {
 			allPosibleDirections[k] = allPosibleDirections[n];  
 			allPosibleDirections[n] = value;  
 		}
-		
+
+		//sortListByNearComeCocos(allPosibleDirections);
 		foreach (Vector2 candidate in allPosibleDirections) {
 			if (valid(candidate)) {
 				if (calledFromCurrentDirection) currentDirection = candidate;
@@ -99,7 +100,33 @@ public class Ghost : MonoBehaviour {
 			}
 		}
 	}
-	
+
+	private void sortListByNearComeCocos(List<Vector2> allPosibleDirections) {
+		Vector2 position = transform.position - comeCocos.transform.position;
+		Vector2 newDirection;
+		if(Math.Abs(position.x) >= Math.Abs(position.y)) {
+			if(position.x <= 0) {
+				//print("right");
+				newDirection = Vector2.right;
+			} else {
+				//print("left");
+				newDirection = -Vector2.right;
+				}
+		} else {
+			if(position.y <= 0) {
+				//print("down");
+				newDirection = Vector2.up;
+			} else {
+				//print("up");
+				newDirection = -Vector2.up;
+			}
+		}
+
+		allPosibleDirections.RemoveAll(val => val == -newDirection);
+		allPosibleDirections.Insert(0, newDirection);
+	}
+
+			
 	bool valid(Vector2 dir) {
 		Vector2 pos = transform.position;
 		RaycastHit2D hit = Physics2D.Linecast(pos + dir, pos);
