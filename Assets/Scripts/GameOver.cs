@@ -15,11 +15,11 @@ public class GameOver : MonoBehaviour {
 	private InputField inputField;
 	private Button button;
 	private GameObject loading;
+	private const String iOS_KEY = "39360";
+	private const String ANDROID_KEY = "39334";
 
+	
 	void Start () {
-		Advertisement.Initialize("38086");
-		if(Advertisement.isReady()) Advertisement.Show();
-
 		loading = GameObject.Find("loading");
 
 		score = GameObject.Find("score").GetComponent<Text>();
@@ -34,11 +34,49 @@ public class GameOver : MonoBehaviour {
 		button = GameObject.Find("buttonDone").GetComponent<Button>();
 		button.gameObject.SetActive(false);
 
+		if (!Advertisement.isSupported) {
+			start();
+		} else {
+			if (Application.platform == RuntimePlatform.Android)
+				Advertisement.Initialize(ANDROID_KEY);
+			else if(Application.platform == RuntimePlatform.IPhonePlayer)
+				Advertisement.Initialize(iOS_KEY);
+
+			StartCoroutine(tryAd());
+			StartCoroutine(startAnyway());
+		}
+
+	}
+
+	public IEnumerator tryAd() {
+		yield return new WaitForSeconds(1f);
+		if (Advertisement.isReady()) {
+			Advertisement.Show(null, new ShowOptions {
+				pause = true,
+				resultCallback = result => {
+					start();
+				}
+			});
+		} else StartCoroutine(tryAd());
+	}
+
+	private bool enable = true;
+	public IEnumerator startAnyway() {
+		yield return new WaitForSeconds(10f);
+
+		if (enable) {
+			UIHandler.score = 0;
+			Application.LoadLevel(0);
+		}	
+	}
+
+	private void start() {
 		var query = ParseObject.GetQuery("GameScore").WhereEqualTo("deviceUniqueIdentifier", SystemInfo.deviceUniqueIdentifier);
 		query.FindAsync().ContinueWith(t => {
 			results = t.Result;
+			enable = results == null;
 		});
-
+		
 		StartCoroutine(callback());
 	}
 

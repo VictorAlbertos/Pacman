@@ -9,8 +9,8 @@ public class SwipeDetector : MonoBehaviour {
 
 	void Start() {
 		comeCocos = GameObject.Find("come_cocos").GetComponent<ComeCocos>();
-		minSwipeDistY = Screen.width * 0.20f;
-		minSwipeDistX = Screen.width * 0.20f;
+		minSwipeDistY = Screen.width * 0.15f;
+		minSwipeDistX = Screen.width * 0.15f;
 	}
 
 	void Update() {
