@@ -1,2 +1,2 @@
-# ComeCocos
-The classic video game "come cocos" for iOS and Android made with Unity 2d 
+# Pacman
+The classic video game Pacman for iOS and Android made with Unity 2d 
